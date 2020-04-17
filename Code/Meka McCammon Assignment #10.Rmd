@@ -1,0 +1,10 @@
+---
+title: "Meka McCammon Assignment # 10"
+date: 17 April 2020
+output: html_notebook
+---
+
+This notebook includes the analysis of Johnson Elementary ELA Data for assignment # 10
+```{r}
+plot(cars)
+```
