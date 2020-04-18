@@ -5,6 +5,91 @@ output: html_notebook
 ---
 
 This notebook includes the analysis of Johnson Elementary ELA Data for assignment # 10
+
+
+#### 1. Write a script to import and tidy the Johnson Elementary Project Data
 ```{r}
-plot(cars)
+library(tidyverse)
+library(here)
 ```
+
+
+```{r include=FALSE}
+jep <- read_csv(here("Data","Johnson Elementary ELA Project.csv"), skip = c(4),
+                col_types = cols(X1 = col_factor()),
+                col_names = c("Room", "ID", "Tardies;Absences","Q1", "Q2", "Q3", "Q4"))
+```
+```{r echo=FALSE}
+jep <- jep %>%
+  separate(`Tardies;Absences`,into = c("Tardies", "Absences"), convert = TRUE)
+```
+```{r}
+jep <- jep %>% fill(Room)
+```
+```{r}
+drop.missing <- jep %>% drop_na(Room:Absences)
+```
+
+
+#### 2. Obtain summary statistics for the number of tardies and absencnes in each room 
+
+```{r echo=FALSE}
+summary.jep <- drop.missing %>%
+  group_by(Room) %>%
+  summarise(tardy.mean = mean(Tardies), tardy.sd = sd(Tardies), tardy.median = median(Tardies),
+            absence.mean = mean(Absences), absence.sd = sd(Absences),
+            absence.median = median(Absences))
+summary.jep
+```
+
+
+#### Here are the frequencies of missing data points for each quarter by room 
+```{r}
+(missing.quarters <- drop.missing %>%
+  group_by(Room) %>%
+  summarise(missing.Q1 = sum(is.na(Q1)), missing.Q2 = sum(is.na(Q2)), missing.Q3 = sum(is.na(Q3)),
+            missing.Q4 = sum(is.na(Q4))))
+```
+
+#### Here is a boxplot of the median trends across the fourth quarter by class
+```{r echo=FALSE}
+
+
+  
+```
+#### 5. construct a graph that compares carriers in terms of the proportion of 2013 flights that arrived on time when traveling from New York City toAtlanta. 
+
+```{r}
+library(here)
+#First filter by year destination and origin
+
+flights <- read_csv(here("Data","NYC Flights 2013.csv")) 
+
+(twenty.thirteen.flights <- filter(flights, year == 2013, origin == "JFK", dest == "ATL"))
+```
+
+```{r}
+
+#Next filter the 2013 flights from NYC to ATL that arrived on time or early 
+(on.time.arrival <-(twenty.thirteen.flights %>%
+  group_by(carrier) %>%
+   filter(arr_delay <= 0)))
+```
+
+
+```{r}
+#Next filter the 2013 flights from NYC to ATL that arrived on time 
+(late.arrival <-(twenty.thirteen.flights %>%
+  group_by(carrier) %>%
+   filter(arr_delay > 0)))
+```
+
+```{r}
+
+(sum.late <-(twenty.thirteen.flights %>%
+  group_by(carrier) %>%
+   filter(arr_delay > 0 %>%
+   summarize(count = n()))))
+```
+           
+
