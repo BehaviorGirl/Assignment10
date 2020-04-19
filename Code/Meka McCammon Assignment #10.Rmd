@@ -8,88 +8,108 @@ This notebook includes the analysis of Johnson Elementary ELA Data for assignmen
 
 
 #### 1. Write a script to import and tidy the Johnson Elementary Project Data
-```{r}
+```{r include=FALSE}
 library(tidyverse)
 library(here)
 ```
-
-
 ```{r include=FALSE}
-jep <- read_csv(here("Data","Johnson Elementary ELA Project.csv"), skip = c(4),
-                col_types = cols(X1 = col_factor()),
+# Read in the data, skip the first 4 rows, specify Room as a factor and name the columns
+jep <- read_csv(here("Data","Johnson Elementary ELA Project.csv"), skip = 4,
+                col_types = cols(Room = col_factor()),
                 col_names = c("Room", "ID", "Tardies;Absences","Q1", "Q2", "Q3", "Q4"))
 ```
+```{r include=FALSE}
+# next gather the quarters to long format, and label the new columns to refer to quarter and the rating
+(gather.quarters <- jep %>%
+  gather(`Q1`, `Q2`, `Q3`, `Q4`,
+         key = "Quarter",
+         value = "Rating"))
+```
+```{r include=FALSE}
+# separate tardies and absences into their own columns
+(separate.attendance <- gather.quarters %>%
+  separate(`Tardies;Absences`,into = c("Tardies", "Absences"), convert = TRUE))
+```
+```{r include=FALSE}
+# Fill the room number down each section 
+(fill.room <- separate.attendance %>% 
+  fill(Room))
+```
 ```{r echo=FALSE}
-jep <- jep %>%
-  separate(`Tardies;Absences`,into = c("Tardies", "Absences"), convert = TRUE)
-```
-```{r}
-jep <- jep %>% fill(Room)
-```
-```{r}
-drop.missing <- jep %>% drop_na(Room:Absences)
+#  remove cells that say NA associated with each Room by ID 
+(tidy.jep <- fill.room %>% 
+   drop_na(Room:Absences))
+# * another way to do this filter(!is.na(ID))
 ```
 
 
 #### 2. Obtain summary statistics for the number of tardies and absencnes in each room 
 
-```{r echo=FALSE}
-summary.jep <- drop.missing %>%
+```{r echo=TRUE}
+(summary.jep <- tidy.jep %>%
   group_by(Room) %>%
-  summarise(tardy.mean = mean(Tardies), tardy.sd = sd(Tardies), tardy.median = median(Tardies),
-            absence.mean = mean(Absences), absence.sd = sd(Absences),
-            absence.median = median(Absences))
-summary.jep
+  summarise(tardy.mean = mean(Tardies),tardy.sd = sd(Tardies), tardy.median = median(Tardies), tardy.quantile1 = quantile(Tardies, probs = 0.25, na.rm = TRUE), tardy.quantile3 = quantile(Tardies, probs = 0.75, na.rm = TRUE), absence.mean = mean(Absences),absence.sd = sd(Absences), absence.median = median(Absences), absence.quantile1 = quantile(Absences, probs = 0.25, na.rm = TRUE), absence.quantile3 = quantile(Absences, probs = 0.75, na.rm = TRUE)))
 ```
 
 
-#### Here are the frequencies of missing data points for each quarter by room 
-```{r}
-(missing.quarters <- drop.missing %>%
-  group_by(Room) %>%
-  summarise(missing.Q1 = sum(is.na(Q1)), missing.Q2 = sum(is.na(Q2)), missing.Q3 = sum(is.na(Q3)),
-            missing.Q4 = sum(is.na(Q4))))
+#### 3. Here are the frequencies of missing data points for each quarter by room 
+```{r echo=TRUE}
+(missing.quarters <- tidy.jep %>%
+  group_by(Room,Quarter) %>%
+  count(sum(is.na(Rating))))
 ```
 
-#### Here is a boxplot of the median trends across the fourth quarter by class
-```{r echo=FALSE}
+#### 4. Here is a line graph of the median trends across the fourth quarter by class
+```{r echo=TRUE}
+median.quarters <- tidy.jep %>%
+  group_by(Quarter,Room) %>%
+  summarize(quarter.medians = median(Rating, na.rm = TRUE)) %>%
+  ggplot(aes(x= Quarter, y = quarter.medians, group = Room)) +
+  geom_line(aes(color = Room), show.legend = FALSE) +
+  facet_wrap(vars(Room), nrow = 2) +
+  labs(x = "Quarter", y = "Median ELA Ratings",
+      title = "Johnson Elementary ELA 5th Grade Ratings",
+      subtitle = "Ratings Across Four Quarters by Classroom")
 
+median.quarters
 
   
 ```
-#### 5. construct a graph that compares carriers in terms of the proportion of 2013 flights that arrived on time when traveling from New York City toAtlanta. 
+#### 5. construct a graph that compares carriers in terms of the proportion of 2013 flights that arrived on time when traveling from New York City to Atlanta. 
 
-```{r}
+```{r include=FALSE}
 library(here)
-#First filter by year destination and origin
+# First filter by year destination and origin
 
 flights <- read_csv(here("Data","NYC Flights 2013.csv")) 
-
-(twenty.thirteen.flights <- filter(flights, year == 2013, origin == "JFK", dest == "ATL"))
+(flights2013 <- filter(flights, year == 2013, dest == "ATL")) %>%
+  filter(!is.na(arr_delay))
 ```
+```{r include=FALSE}
 
-```{r}
+# Filter the 2013 flights from NYC to ATL that arrived on time or early 
 
-#Next filter the 2013 flights from NYC to ATL that arrived on time or early 
-(on.time.arrival <-(twenty.thirteen.flights %>%
+(on.time.arrival <-(flights2013 %>%
   group_by(carrier) %>%
-   filter(arr_delay <= 0)))
+   filter(arr_delay <= 0 & arr_delay > 0)))
+count(on.time.arrival)
 ```
+```{r include=FALSE}
 
-
-```{r}
-#Next filter the 2013 flights from NYC to ATL that arrived on time 
-(late.arrival <-(twenty.thirteen.flights %>%
+# Next filter the 2013 flights from NYC to ATL that arrived late 
+(late.arrival <-(flights2013 %>%
   group_by(carrier) %>%
    filter(arr_delay > 0)))
 ```
-
 ```{r}
+# see grammar of graphics script for creating the proportions
 
-(sum.late <-(twenty.thirteen.flights %>%
+arrivals <- flights2013 %>%
   group_by(carrier) %>%
-   filter(arr_delay > 0 %>%
-   summarize(count = n()))))
+  filter(arr_delay >0) %>%
+  ggplot(flights2013, mapping = aes(x = carrier, fill = arr_delay)) +
+  geom_bar(position = "fill")
+
 ```
-           
+
 
