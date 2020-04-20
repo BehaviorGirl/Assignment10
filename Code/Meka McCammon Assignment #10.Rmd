@@ -82,11 +82,19 @@ library(here)
 # First filter by year destination and origin
 
 flights <- read_csv(here("Data","NYC Flights 2013.csv")) 
-(flights2013 <- filter(flights, year == 2013, dest == "ATL")) %>%
-  filter(!is.na(arr_delay))
 ```
-```{r include=FALSE}
-
+```{r echo=TRUE}
+flights2013 <- flights %>% 
+   filter(year == 2013, dest == "ATL", !is.na(arr_delay)) %>%
+   mutate(timely= (arr_delay <=0)) 
+```
+```{r}
+ggplot(data = flights2013, mapping = aes(x=carrier)) +
+geom_bar(aes(fill = "timely"), position = "fill")
+```
+  
+flights2013
+```
 # Filter the 2013 flights from NYC to ATL that arrived on time or early 
 
 (on.time.arrival <-(flights2013 %>%
@@ -107,9 +115,10 @@ count(on.time.arrival)
 arrivals <- flights2013 %>%
   group_by(carrier) %>%
   filter(arr_delay >0) %>%
-  ggplot(flights2013, mapping = aes(x = carrier, fill = arr_delay)) +
-  geom_bar(position = "fill")
+  ggplot(flights2013, mapping = aes(x = carrier)) +
+  geom_bar(aes(position = "fill")
 
+arrivals
 ```
 
 
