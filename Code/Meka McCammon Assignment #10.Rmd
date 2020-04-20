@@ -48,7 +48,14 @@ jep <- read_csv(here("Data","Johnson Elementary ELA Project.csv"), skip = 4,
 ```{r echo=TRUE}
 (summary.jep <- tidy.jep %>%
   group_by(Room) %>%
-  summarise(tardy.mean = mean(Tardies),tardy.sd = sd(Tardies), tardy.median = median(Tardies), tardy.quantile1 = quantile(Tardies, probs = 0.25, na.rm = TRUE), tardy.quantile3 = quantile(Tardies, probs = 0.75, na.rm = TRUE), absence.mean = mean(Absences),absence.sd = sd(Absences), absence.median = median(Absences), absence.quantile1 = quantile(Absences, probs = 0.25, na.rm = TRUE), absence.quantile3 = quantile(Absences, probs = 0.75, na.rm = TRUE)))
+  summarise(tardy.mean = mean(Tardies),tardy.sd = sd(Tardies), 
+            tardy.median = median(Tardies), 
+            tardy.quantile1 = quantile(Tardies, probs = 0.25, na.rm = TRUE), 
+            tardy.quantile3 = quantile(Tardies, probs = 0.75, na.rm = TRUE), 
+            absence.mean = mean(Absences),absence.sd = sd(Absences), 
+            absence.median = median(Absences), 
+            absence.quantile1 = quantile(Absences, probs = 0.25, na.rm = TRUE),
+            absence.quantile3 = quantile(Absences, probs = 0.75, na.rm = TRUE)))
 ```
 
 
@@ -75,7 +82,7 @@ median.quarters
 
   
 ```
-#### 5. construct a graph that compares carriers in terms of the proportion of 2013 flights that arrived on time when traveling from New York City to Atlanta. 
+#### 5.Compare carriers in terms of the proportion of 2013 flights that arrived on time when traveling from New York City to Atlanta. 
 
 ```{r include=FALSE}
 library(here)
@@ -93,32 +100,3 @@ ggplot(data = flights2013, mapping = aes(x=carrier)) +
 geom_bar(aes(fill = "timely"), position = "fill")
 ```
   
-flights2013
-```
-# Filter the 2013 flights from NYC to ATL that arrived on time or early 
-
-(on.time.arrival <-(flights2013 %>%
-  group_by(carrier) %>%
-   filter(arr_delay <= 0 & arr_delay > 0)))
-count(on.time.arrival)
-```
-```{r include=FALSE}
-
-# Next filter the 2013 flights from NYC to ATL that arrived late 
-(late.arrival <-(flights2013 %>%
-  group_by(carrier) %>%
-   filter(arr_delay > 0)))
-```
-```{r}
-# see grammar of graphics script for creating the proportions
-
-arrivals <- flights2013 %>%
-  group_by(carrier) %>%
-  filter(arr_delay >0) %>%
-  ggplot(flights2013, mapping = aes(x = carrier)) +
-  geom_bar(aes(position = "fill")
-
-arrivals
-```
-
-
